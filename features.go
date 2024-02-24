@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"net/http"
 )
 
 type FeaturesService service
@@ -16,7 +15,7 @@ type FeaturesSearchParameters struct {
 	Year      *int    `url:"year,omitempty"`
 }
 
-type FeaturesSearchResponse struct {
+type featuresSearchResponse struct {
 	Data []*FeatureEntity `json:"data,omitempty"`
 }
 
@@ -64,7 +63,7 @@ type Episode struct {
 // [OpenSubtitles Reference]
 //
 // [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/f5eb2608c8fc7-search-for-features
-func (s *FeaturesService) Search(ctx context.Context, p *FeaturesSearchParameters) (*FeaturesSearchResponse, *http.Response, error) {
+func (s *FeaturesService) Search(ctx context.Context, p *FeaturesSearchParameters) ([]*FeatureEntity, *Response, error) {
 	u, err := s.client.NewURL("features", &p)
 	if err != nil {
 		return nil, nil, err
@@ -75,11 +74,11 @@ func (s *FeaturesService) Search(ctx context.Context, p *FeaturesSearchParameter
 		return nil, nil, err
 	}
 
-	var r *FeaturesSearchResponse
+	var r *featuresSearchResponse
 	res, err := s.client.Do(ctx, req, &r)
 	if err != nil {
 		return nil, res, err
 	}
 
-	return r, res, nil
+	return r.Data, res, nil
 }

@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 )
 
 type AuthService service
@@ -51,7 +50,7 @@ func (l *Login) UnmarshalJSON(data []byte) error {
 // [OpenSubtitles Reference]
 //
 // [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/73acf79accc0a-login
-func (s *AuthService) Login(ctx context.Context, c *Credentials) (*Login, *http.Response, error) {
+func (s *AuthService) Login(ctx context.Context, c *Credentials) (*Login, *Response, error) {
 	u, err := s.client.NewURL("login", nil)
 	if err != nil {
 		return nil, nil, err
@@ -76,7 +75,7 @@ func (s *AuthService) Login(ctx context.Context, c *Credentials) (*Login, *http.
 // [OpenSubtitles Reference]
 //
 // [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/9fe4d6d078e50-logout
-func (s *AuthService) Logout(ctx context.Context) (*http.Response, error) {
+func (s *AuthService) Logout(ctx context.Context) (*Response, error) {
 	u, err := s.client.NewURL("logout", nil)
 	if err != nil {
 		return nil, err

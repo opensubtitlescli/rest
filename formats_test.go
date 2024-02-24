@@ -10,31 +10,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnmarshalsAndMarshalsFormat(t *testing.T) {
-	a0 := &FormatsData{}
-	b0 := "{}"
-	equalJSON(t, a0, b0)
+func TestFormatsResponse_UnmarshalsAndMarshals(t *testing.T) {
+	a := &FormatsResponse{}
+	b := "{}"
+	equalJSON(t, a, b)
 
-	a1 := &FormatsResponse{}
-	b1 := "{}"
-	equalJSON(t, a1, b1)
-
-	a2 := &FormatsResponse{
-		Data: &FormatsData{
-			OutputFormats: []*string{
-				AllocateString("srt"),
-			},
+	a = &FormatsResponse{
+		OutputFormats: []*string{
+			AllocateString("srt"),
 		},
 	}
-	b2 := `{
-		"data": {
-			"output_formats": ["srt"]
-		}
+	b = `{
+		"output_formats": ["srt"]
 	}`
-	equalJSON(t, a2, b2)
+	equalJSON(t, a, b)
 }
 
-func TestListsFormats(t *testing.T) {
+func TestLFormatsServiceList_ListsFormats(t *testing.T) {
 	client, mux, teardown := setup()
 	defer teardown()
 
@@ -48,14 +40,12 @@ func TestListsFormats(t *testing.T) {
 		}`)
 	})
 
+	ctx := context.Background()
 	e := &FormatsResponse{
-		Data: &FormatsData{
-			OutputFormats: []*string{
-				AllocateString("srt"),
-			},
+		OutputFormats: []*string{
+			AllocateString("srt"),
 		},
 	}
-	ctx := context.Background()
 	a, _, err := client.Formats.List(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, e, a)

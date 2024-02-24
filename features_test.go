@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEncodesFeaturesSearchParametersValues(t *testing.T) {
-	a0 := &FeaturesSearchParameters{}
-	b0 := ""
-	equalQuery(t, a0, b0)
+func TestFeaturesSearchParameters_EncodesValues(t *testing.T) {
+	a := &FeaturesSearchParameters{}
+	b := ""
+	equalQuery(t, a, b)
 
-	a1 := &FeaturesSearchParameters{
+	a = &FeaturesSearchParameters{
 		FeatureID: AllocateID(1),
 		IMDBID: AllocateID(1),
 		Query: AllocateString("hi"),
@@ -23,63 +23,61 @@ func TestEncodesFeaturesSearchParametersValues(t *testing.T) {
 		Type: AllocateString("all"),
 		Year: AllocateInt(2009),
 	}
-	b1 := "feature_id=1&imdb_id=1&query=hi&tmdb_id=1&type=all&year=2009"
-	equalQuery(t, a1, b1)
+	b = "feature_id=1&imdb_id=1&query=hi&tmdb_id=1&type=all&year=2009"
+	equalQuery(t, a, b)
 }
 
-func TestUnmarshalsAndMarshalsFeature(t *testing.T) {
-	a0 := &Feature{}
-	b0 := "{}"
-	equalJSON(t, a0, b0)
+func TestFeature_UnmarshalsAndMarshals(t *testing.T) {
+	a := &Feature{}
+	b := "{}"
+	equalJSON(t, a, b)
 
-	a1 := &FeatureEntity{}
-	b1 := "{}"
-	equalJSON(t, a1, b1)
-
-	a2 := &FeaturesSearchResponse{}
-	b2 := "{}"
-	equalJSON(t, a2, b2)
-
-	a3 := &FeaturesSearchResponse{
-		Data: []*FeatureEntity{
-			{
-				ID: AllocateID(1),
-				Attributes: &Feature{
-					EpisodeNumber: AllocateInt(1),
-					FeatureType: AllocateString("movie"),
-					IMDBID: AllocateID(1),
-					ParentIMDBID: AllocateID(1),
-					ParentTitle: AllocateString("hi"),
-					SeasonNumber: AllocateInt(1),
-					Title: AllocateString("hola"),
-					TMDBID: AllocateID(1),
-					Year: AllocateString("2009"),
-				},
-			},
-		},
+	a = &Feature{
+		EpisodeNumber: AllocateInt(1),
+		FeatureType: AllocateString("movie"),
+		IMDBID: AllocateID(1),
+		ParentIMDBID: AllocateID(1),
+		ParentTitle: AllocateString("hi"),
+		SeasonNumber: AllocateInt(1),
+		Title: AllocateString("hola"),
+		TMDBID: AllocateID(1),
+		Year: AllocateString("2009"),
 	}
-	b3 := `{
-		"data": [
-			{
-				"id": "1",
-				"attributes": {
-					"episode_number": 1,
-					"feature_type": "movie",
-					"imdb_id": 1,
-					"parent_imdb_id": 1,
-					"parent_title": "hi",
-					"season_number": 1,
-					"title": "hola",
-					"tmdb_id": 1,
-					"year": "2009"
-				}
-			}
-		]
+	b = `{
+		"episode_number": 1,
+		"feature_type": "movie",
+		"imdb_id": 1,
+		"parent_imdb_id": 1,
+		"parent_title": "hi",
+		"season_number": 1,
+		"title": "hola",
+		"tmdb_id": 1,
+		"year": "2009"
 	}`
-	equalJSON(t, a3, b3)
+	equalJSON(t, a, b)
 }
 
-func TestSearchesFeatures(t *testing.T) {
+func TestFeatureEntity_UnmarshalsAndMarshals(t *testing.T) {
+	a := &FeatureEntity{}
+	b := "{}"
+	equalJSON(t, a, b)
+
+	a = &FeatureEntity{
+		Attributes: &Feature{
+			EpisodeNumber: AllocateInt(1),
+		},
+		ID: AllocateID(1),
+	}
+	b = `{
+		"attributes": {
+			"episode_number": 1
+		},
+		"id": 1
+	}`
+	equalJSON(t, a, b)
+}
+
+func TestFeaturesServiceSearch_SearchesFeatures(t *testing.T) {
 	client, mux, teardown := setup()
 	defer teardown()
 
@@ -95,14 +93,12 @@ func TestSearchesFeatures(t *testing.T) {
 		}`)
 	})
 
-	e := &FeaturesSearchResponse{
-		Data: []*FeatureEntity{
-			{
-				ID: AllocateID(126826),
-			},
+	ctx := context.Background()
+	e := []*FeatureEntity{
+		{
+			ID: AllocateID(126826),
 		},
 	}
-	ctx := context.Background()
 	p := &FeaturesSearchParameters{
 		FeatureID: AllocateID(0),
 	}

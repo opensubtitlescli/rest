@@ -1,10 +1,7 @@
 package rest
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 )
 
@@ -21,17 +18,8 @@ type SubtitlesDownloadParameters struct {
 }
 
 type SubtitlesDownloadResponse struct {
-	Quota    *Quota  `json:"-"`
 	FileName *string `json:"file_name,omitempty"`
 	Link     *string `json:"link,omitempty"`
-
-	// Quota replaces them without the message. Usually, you do not need to see
-	// the message unless you encounter an error.
-	// Message      *string    `json:"message,omitempty"`
-	// Remaining    *int       `json:"remaining,omitempty"`
-	// Requests     *int       `json:"requests,omitempty"`
-	// ResetTime    *string    `json:"reset_time,omitempty"`
-	// ResetTimeUTC *time.Time `json:"reset_time_utc,omitempty"`
 
 	// Found in the response body, but I do not know what they are for.
 	// TS  *int    `json:"ts,omitempty"`
@@ -39,38 +27,12 @@ type SubtitlesDownloadResponse struct {
 	// UK  *string `json:"uk,omitempty"`
 }
 
-func (r *SubtitlesDownloadResponse) UnmarshalJSON(data []byte) error {
-	type a SubtitlesDownloadResponse
-	b := struct { *a }{ (*a)(r) }
-
-	err := json.Unmarshal(data, b.a)
-	if err != nil {
-		return err
-	}
-
-	var q *Quota
-	err = json.Unmarshal(data, &q)
-	if err != nil {
-		return err
-	}
-
-	r.Quota = q
-	return nil
-}
-
-type Quota struct {
-	Remaining    int       `json:"remaining"`
-	Requests     int       `json:"requests"`
-	ResetTime    string    `json:"reset_time"`
-	ResetTimeUTC time.Time `json:"reset_time_utc"`
-}
-
 // Requests a download URL for a subtitles.
 //
 // [OpenSubtitles Reference]
 //
 // [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/6be7f6ae2d918-download
-func (s *SubtitlesService) Download(ctx context.Context, p *SubtitlesDownloadParameters) (*SubtitlesDownloadResponse, *http.Response, error) {
+func (s *SubtitlesService) Download(ctx context.Context, p *SubtitlesDownloadParameters) (*SubtitlesDownloadResponse, *Response, error) {
 	u, err := s.client.NewURL("download", nil)
 	if err != nil {
 		return nil, nil, err
@@ -81,15 +43,8 @@ func (s *SubtitlesService) Download(ctx context.Context, p *SubtitlesDownloadPar
 		return nil, nil, err
 	}
 
-	buf := &bytes.Buffer{}
-	res, err := s.client.Do(ctx, req, buf)
-	if err != nil {
-		return nil, res, err
-	}
-
 	var r *SubtitlesDownloadResponse
-	data := buf.Bytes()
-	err = json.Unmarshal(data, &r)
+	res, err := s.client.Do(ctx, req, &r)
 	if err != nil {
 		return nil, res, err
 	}
@@ -123,12 +78,8 @@ type SubtitlesSearchParameters struct {
 	Year              *int    `url:"year,omitempty"`
 }
 
-type SubtitlesSearchResponse struct {
-	Data       []*SubtitleEntity `json:"data,omitempty"`
-	Page       *int              `json:"page,omitempty"`
-	PerPage    *int              `json:"per_page,omitempty"`
-	TotalCount *int              `json:"total_count,omitempty"`
-	TotalPages *int              `json:"total_pages,omitempty"`
+type subtitlesSearchResponse struct {
+	Data []*SubtitleEntity `json:"data,omitempty"`
 }
 
 type SubtitleEntity struct {
@@ -200,7 +151,7 @@ type Uploader struct {
 // [OpenSubtitles Reference]
 //
 // [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/a172317bd5ccc-search-for-subtitles
-func (s *SubtitlesService) Search(ctx context.Context, p *SubtitlesSearchParameters) (*SubtitlesSearchResponse, *http.Response, error) {
+func (s *SubtitlesService) Search(ctx context.Context, p *SubtitlesSearchParameters) ([]*SubtitleEntity, *Response, error) {
 	u, err := s.client.NewURL("subtitles", &p)
 	if err != nil {
 		return nil, nil, err
@@ -211,11 +162,11 @@ func (s *SubtitlesService) Search(ctx context.Context, p *SubtitlesSearchParamet
 		return nil, nil, err
 	}
 
-	var r *SubtitlesSearchResponse
+	var r *subtitlesSearchResponse
 	res, err := s.client.Do(ctx, req, &r)
 	if err != nil {
 		return nil, res, err
 	}
 
-	return r, res, nil
+	return r.Data, res, nil
 }

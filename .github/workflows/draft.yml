@@ -1,0 +1,29 @@
+name: draft
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+    - "*"
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Golang
+      uses: actions/setup-go@v5
+      with:
+        go-version: "1.21.5"
+
+    - name: Draft a Release
+      uses: goreleaser/goreleaser-action@v5
+      with:
+        version: "1.24.0"
+        args: release --clean
+      env:
+        GITHUB_TOKEN: ${{ github.token }}

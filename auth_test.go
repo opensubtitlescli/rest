@@ -10,56 +10,56 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnmarshalsAndMarshalsCredentials(t *testing.T) {
-	a0 := &Credentials{}
-	b0 := "{}"
-	equalJSON(t, a0, b0)
+func TestCredentials_UnmarshalsAndMarshals(t *testing.T) {
+	a := &Credentials{}
+	b := "{}"
+	equalJSON(t, a, b)
 
-	a1 := &Credentials{
+	a = &Credentials{
 		Username: AllocateString("username"),
 		Password: AllocateString("password"),
 	}
-	b1 := `{
+	b = `{
 		"username": "username",
 		"password": "password"
 	}`
-	equalJSON(t, a1, b1)
+	equalJSON(t, a, b)
 }
 
-func TestUnmarshalsAndMarshalsLogin(t *testing.T) {
-	a0 := &Login{
+func TestLogin_UnmarshalsAndMarshals(t *testing.T) {
+	a := &Login{
 		ClientBaseURL: defaultBaseURL,
 	}
-	b0 := "{}"
-	equalJSON(t, a0, b0)
+	b := "{}"
+	equalJSON(t, a, b)
 
-	a1 := &Login{
+	a = &Login{
 		ClientBaseURL: defaultBaseURL,
 		User: &User{
 			VIP: AllocateBool(false),
 		},
 	}
-	b1 := `{
+	b = `{
 		"user": {
 			"vip": false
 		}
 	}`
-	equalJSON(t, a1, b1)
+	equalJSON(t, a, b)
 
-	a2 := &Login{
+	a = &Login{
 		ClientBaseURL: vipBaseURL,
 		User: &User{
 			VIP: AllocateBool(true),
 		},
 	}
-	b2 := `{
+	b = `{
 		"user": {
 			"vip": true
 		}
 	}`
-	equalJSON(t, a2, b2)
+	equalJSON(t, a, b)
 
-	a3 := &Login{
+	a = &Login{
 		ClientBaseURL: defaultBaseURL,
 		User: &User{
 			AllowedDownloads: AllocateInt(100),
@@ -72,22 +72,22 @@ func TestUnmarshalsAndMarshalsLogin(t *testing.T) {
 		BaseURL: AllocateString("api.opensubtitles.com"),
 		Token: AllocateString("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"),
 	}
-	b3 := `{
+	b = `{
+		"base_url": "api.opensubtitles.com",
+		"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
 		"user": {
 			"allowed_downloads": 100,
 			"allowed_translations": 5,
+			"ext_installed": false,
 			"level": "Sub leecher",
 			"user_id": 66,
-			"ext_installed": false,
 			"vip": false
-		},
-		"base_url": "api.opensubtitles.com",
-		"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
+		}
 	}`
-	equalJSON(t, a3, b3)
+	equalJSON(t, a, b)
 }
 
-func TestLogins(t *testing.T) {
+func TestAuthServiceLogin_Logins(t *testing.T) {
 	client, mux, teardown := setup()
 	defer teardown()
 
@@ -98,11 +98,11 @@ func TestLogins(t *testing.T) {
 		}`)
 	})
 
+	ctx := context.Background()
 	e := &Login{
 		ClientBaseURL: defaultBaseURL,
 		Token: AllocateString("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"),
 	}
-	ctx := context.Background()
 	c := &Credentials{
 		Username: AllocateString("username"),
 		Password: AllocateString("password"),
@@ -112,7 +112,7 @@ func TestLogins(t *testing.T) {
 	assert.Equal(t, e, a)
 }
 
-func TestLogouts(t *testing.T) {
+func TestAuthServiceLogout_Logouts(t *testing.T) {
 	client, mux, teardown := setup()
 	defer teardown()
 
