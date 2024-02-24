@@ -1,0 +1,3 @@
+go            1.21.5
+golangci-lint 1.55.2
+# make        4.4.1
