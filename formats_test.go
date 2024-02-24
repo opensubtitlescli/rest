@@ -10,31 +10,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnmarshalsAndMarshalsFormat(t *testing.T) {
-	a0 := &FormatsData{}
-	b0 := "{}"
-	equalJSON(t, a0, b0)
+func TestFormatsListResponse_UnmarshalsAndMarshals(t *testing.T) {
+	a := &FormatsListResponse{}
+	b := "{}"
+	equalJSON(t, a, b)
 
-	a1 := &FormatsResponse{}
-	b1 := "{}"
-	equalJSON(t, a1, b1)
-
-	a2 := &FormatsResponse{
-		Data: &FormatsData{
-			OutputFormats: []*string{
-				AllocateString("srt"),
-			},
+	a = &FormatsListResponse{
+		OutputFormats: []*string{
+			AllocateString("srt"),
 		},
 	}
-	b2 := `{
-		"data": {
-			"output_formats": ["srt"]
-		}
+	b = `{
+		"output_formats": ["srt"]
 	}`
-	equalJSON(t, a2, b2)
+	equalJSON(t, a, b)
 }
 
-func TestListsFormats(t *testing.T) {
+func TestFormatsServiceList_ListsFormats(t *testing.T) {
 	client, mux, teardown := setup()
 	defer teardown()
 
@@ -48,15 +40,41 @@ func TestListsFormats(t *testing.T) {
 		}`)
 	})
 
-	e := &FormatsResponse{
-		Data: &FormatsData{
-			OutputFormats: []*string{
-				AllocateString("srt"),
-			},
+	ctx := context.Background()
+
+	e := &FormatsListResponse{
+		OutputFormats: []*string{
+			AllocateString("srt"),
 		},
 	}
-	ctx := context.Background()
 	a, _, err := client.Formats.List(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, e, a)
+}
+
+func TestFormatsServiceList_ReturnsAnErrorIfCannotCreateAURL(t *testing.T) {
+	client, _, teardown := setup()
+	defer teardown()
+
+	ctx := context.Background()
+
+	e := useBadBaseURL(client)
+	_, _, a := client.Formats.List(ctx)
+	assert.EqualError(t, a, e)
+}
+
+func TestFormatsServiceList_ReturnsAnErrorIfTheServerRespondsWithAnError(t *testing.T) {
+	client, mux, teardown := setup()
+	defer teardown()
+
+	mux.HandleFunc("/infos/formats", func (w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	})
+
+	ctx := context.Background()
+
+	_, _, err := client.Formats.List(ctx)
+	var a *ErrorResponse
+	require.ErrorAs(t, err, &a)
+	assert.Equal(t, a.Response.StatusCode, http.StatusBadRequest)
 }

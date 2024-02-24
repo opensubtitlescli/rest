@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,23 +19,32 @@ import (
 const (
 	Version = "0.0.1"
 
-	defaultVersion   = "v1"
-	defaultUserAgent = "me.vanyauhalin.opensubtitlescli.rest v0.1.0"
+	defaultAPIKey    = ""
+	defaultUserAgent = "me.vanyauhalin.opensubtitlescli.rest v" + Version
 
+	defaultVersion = "v1"
 	defaultBaseURL = "https://api.opensubtitles.com/api/" + defaultVersion + "/"
 	vipBaseURL     = "https://vip-api.opensubtitles.com/api/" + defaultVersion + "/"
 
 	apiKeyHeader  = "Api-Key"
 	messageHeader = "X-OpenSubtitles-Message"
+
+	headerRateLimit     = "X-RateLimit-Limit"
+	headerRateRemaining = "X-RateLimit-Remaining"
+	headerRateReset     = "X-RateLimit-Reset"
+
+	// Found in several endpoint in response headers, but I do not use them.
+	// vipHeader         = "X-Vip"
+	// vipConsumerHeader = "X-Vip-Consumer"
+	// vipUserHeader     = "X-Vip-User"
 )
 
 type Client struct {
 	client *http.Client
 
-	apiKey  string
-	baseURL *url.URL
-
+	APIKey    string
 	UserAgent string
+	BaseURL   *url.URL
 
 	internal service
 
@@ -52,42 +60,44 @@ type service struct {
 	client *Client
 }
 
-func NewClient(apiKey string) *Client {
-	c := &Client{
-		client: http.DefaultClient,
-		apiKey: apiKey,
+func NewClient(client *http.Client) *Client {
+	c := &Client{}
+
+	if (client == nil) {
+		client := *http.DefaultClient
+		c.client = &client
+	} else {
+		client := *client
+		c.client = &client
+		if c.client.Transport == nil {
+			c.client.Transport = http.DefaultTransport
+		}
 	}
-	c.init()
+
+	c.APIKey = defaultAPIKey
+	c.UserAgent = defaultUserAgent
+	c.BaseURL, _ = url.Parse(defaultBaseURL)
+
+	c.internal.client = c
+
+	c.Auth = (*AuthService)(&c.internal)
+	c.Features = (*FeaturesService)(&c.internal)
+	c.Formats = (*FormatsService)(&c.internal)
+	c.Languages = (*LanguagesService)(&c.internal)
+	c.Subtitles = (*SubtitlesService)(&c.internal)
+	c.Users = (*UsersService)(&c.internal)
+
 	return c
 }
 
-func (c *Client) BaseURL() string {
-	return c.baseURL.String()
-}
-
-func (c *Client) SetBaseURL(u string) error {
-	b, err := url.Parse(u)
-	if err != nil {
-		return err
-	}
-
-	if !strings.HasSuffix(b.Path, "/") {
-		return fmt.Errorf("rest: base url must have a trailing slash, but %q does not", u)
-	}
-
-	c.baseURL = b
-	return nil
+func (c *Client) Client() *http.Client {
+	client := *c.client
+	return &client
 }
 
 func (c *Client) WithAuthToken(t string) *Client {
 	cp := c.copy()
-	defer cp.init()
-
 	tr := cp.client.Transport
-	if tr == nil {
-		tr = http.DefaultTransport
-	}
-
 	cp.client.Transport = roundTripperFunc(
 		func (req *http.Request) (*http.Response, error) {
 			req = req.Clone(req.Context())
@@ -95,62 +105,45 @@ func (c *Client) WithAuthToken(t string) *Client {
 			return tr.RoundTrip(req)
 		},
 	)
+	return cp
+}
+
+func (c *Client) copy() *Client {
+	cp := NewClient(c.client)
+
+	if c.APIKey != "" {
+		cp.APIKey = c.APIKey
+	}
+	if c.UserAgent != "" {
+		cp.UserAgent = c.UserAgent
+	}
+	if c.BaseURL != nil {
+		cp.BaseURL = c.BaseURL
+	}
 
 	return cp
 }
 
-// Creates a RoundTripper (transport).
-type roundTripperFunc func(*http.Request) (*http.Response, error)
-
-func (fn roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
-	return fn(r)
-}
-
-func (c *Client) init() {
-	if c.client == nil {
-		c.client = http.DefaultClient
+func (c *Client) NewURL(p string, v interface {}) (string, error) {
+	if !strings.HasSuffix(c.BaseURL.Path, "/") {
+		return "", fmt.Errorf("rest: base url must have a trailing slash, but %q does not", c.BaseURL)
 	}
-	if c.baseURL == nil {
-		c.baseURL, _ = url.Parse(defaultBaseURL)
-	}
-	if c.UserAgent == "" {
-		c.UserAgent = defaultUserAgent
-	}
-	c.internal.client = c
-	c.Auth = (*AuthService)(&c.internal)
-	c.Features = (*FeaturesService)(&c.internal)
-	c.Formats = (*FormatsService)(&c.internal)
-	c.Languages = (*LanguagesService)(&c.internal)
-	c.Subtitles = (*SubtitlesService)(&c.internal)
-	c.Users = (*UsersService)(&c.internal)
-}
-
-func (c *Client) copy() *Client {
-	return &Client{
-		client: c.client,
-		apiKey: c.apiKey,
-		baseURL: c.baseURL,
-		UserAgent: c.UserAgent,
-	}
-}
-
-func (c *Client) NewURL(path string, params interface {}) (*url.URL, error) {
-	if strings.HasPrefix(path, "/") {
-		return nil, fmt.Errorf("rest: url path must not have a leading slash, but %q does", path)
+	if strings.HasPrefix(p, "/") {
+		return "", fmt.Errorf("rest: url path must not have a leading slash, but %q does", p)
 	}
 
-	u, err := c.baseURL.Parse(path)
+	u, err := c.BaseURL.Parse(p)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	if params == nil {
-		return u, nil
+	if v == nil {
+		return u.String(), nil
 	}
 
-	q, err := query.Values(params)
+	q, err := query.Values(v)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	s := q.Encode()
@@ -159,42 +152,114 @@ func (c *Client) NewURL(path string, params interface {}) (*url.URL, error) {
 		u.RawQuery = "&" + s
 	}
 
-	return u, nil
+	return u.String(), nil
 }
 
-func (c *Client) NewRequest(method string, url *url.URL, body interface {}) (*http.Request, error) {
-	if url == nil {
-		return nil, errors.New("rest: url must not be nil")
-	}
-
-	var buf io.ReadWriter
-	if body != nil {
-		b, err := json.Marshal(body)
+func (c *Client) NewRequest(m string, u string, b interface {}) (*http.Request, error) {
+	var body io.ReadWriter
+	if b != nil {
+		b, err := json.Marshal(b)
 		if err != nil {
 			return nil, err
 		}
-		buf = bytes.NewBuffer(b)
+		body = bytes.NewBuffer(b)
 	}
 
-	req, err := http.NewRequest(method, url.String(), buf)
+	req, err := http.NewRequest(m, u, body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set(apiKeyHeader, c.apiKey)
+	req.Header.Set(apiKeyHeader, c.APIKey)
 
-	if body != nil {
+	if b != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	if c.UserAgent != "" {
-		req.Header.Set("User-Agent", c.UserAgent)
-	}
+
+	req.Header.Set("User-Agent", c.UserAgent)
 
 	return req, nil
 }
 
-func (c *Client) Do(ctx context.Context, req *http.Request, v interface {}) (*http.Response, error) {
+type Response struct {
+	*http.Response
+	Pagination     Pagination
+	Quota          Quota
+	Rate           Rate
+}
+
+type Pagination struct {
+	Page       int `json:"page"`
+	PerPage    int `json:"per_page"`
+	TotalCount int `json:"total_count"`
+	TotalPages int `json:"total_pages"`
+}
+
+type Quota struct {
+	Remaining    int       `json:"remaining"`
+	Requests     int       `json:"requests"`
+	ResetTime    string    `json:"reset_time"`
+	ResetTimeUTC time.Time `json:"reset_time_utc"`
+}
+
+type Rate struct {
+	Limit     int
+	Remaining int
+	Reset     int
+}
+
+func newResponse(r *http.Response) *Response {
+	res := &Response{Response: r}
+
+	var p Pagination
+	var q Quota
+
+	t := r.Header.Get("Content-Type")
+	if t != "" && strings.Contains(t, "application/json") {
+		data, err := io.ReadAll(r.Body)
+		if err == nil && data != nil {
+			err = json.Unmarshal(data, &p)
+			if err != nil {
+				p = Pagination{}
+			}
+			err = json.Unmarshal(data, &q)
+			if err != nil {
+				q = Quota{}
+			}
+		}
+		r.Body = io.NopCloser(bytes.NewBuffer(data))
+	}
+
+	res.Pagination = p
+	res.Quota = q
+	res.Rate = parseRate(r)
+
+	return res
+}
+
+func parseRate(res *http.Response) Rate {
+	var r Rate
+
+	h := res.Header.Get(headerRateLimit)
+	if h != "" {
+		r.Limit, _ = strconv.Atoi(h)
+	}
+
+	h = res.Header.Get(headerRateRemaining)
+	if h != "" {
+		r.Remaining, _ = strconv.Atoi(h)
+	}
+
+	h = res.Header.Get(headerRateReset)
+	if h != "" {
+		r.Reset, _ = strconv.Atoi(h)
+	}
+
+	return r
+}
+
+func (c *Client) Do(ctx context.Context, req *http.Request, v interface {}) (*Response, error) {
 	res, err := c.BareDo(ctx, req)
 	if err != nil {
 		return res, err
@@ -220,14 +285,10 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v interface {}) (*ht
 	return res, err
 }
 
-func (c *Client) BareDo(ctx context.Context, req *http.Request) (*http.Response, error) {
-	if ctx == nil {
-		return nil, errors.New("rest: context must not be nil")
-	}
-
+func (c *Client) BareDo(ctx context.Context, req *http.Request) (*Response, error) {
 	req = req.WithContext(ctx)
 
-	res, err := c.client.Do(req)
+	r, err := c.client.Do(req)
 	if err != nil {
 		// If we got an error, and the context has been canceled, the context's
 		// error is probably more useful.
@@ -240,12 +301,14 @@ func (c *Client) BareDo(ctx context.Context, req *http.Request) (*http.Response,
 		return nil, err
 	}
 
-	err = CheckResponse(res)
+	res := newResponse(r)
+
+	err = CheckResponse(r)
 	if err != nil {
-		res.Body.Close()
+		r.Body.Close()
 	}
 
-	return res, nil
+	return res, err
 }
 
 type UserAgentError ResponseError
@@ -333,9 +396,6 @@ type internalError struct {
 	Message *string   `json:"message,omitempty"`
 	Error   *string   `json:"error,omitempty"`
 	Errors  []*string `json:"errors,omitempty"`
-
-	// Ignored because it can be accessed from the response object.
-	// Status *int `json:"status,omitempty"`
 }
 
 func CheckResponse(res *http.Response) error {
@@ -343,22 +403,22 @@ func CheckResponse(res *http.Response) error {
 		return nil
 	}
 
-	errRes := &ErrorResponse{
+	er := &ErrorResponse{
 		ResponseError: ResponseError{
 			Response: res,
 		},
 	}
 
-	messages := []string{}
+	var messages []string
 
-	v := errRes.Response.Header.Get(messageHeader)
+	v := er.Response.Header.Get(messageHeader)
 	if v != "" {
 		messages = append(messages, v)
 	}
 
 	data, err := io.ReadAll(res.Body)
 	if err == nil && data != nil {
-		t := errRes.Response.Header.Get("Content-Type")
+		t := er.Response.Header.Get("Content-Type")
 		if t != "" {
 			switch {
 			case strings.Contains(t, "application/json"):
@@ -403,7 +463,7 @@ func CheckResponse(res *http.Response) error {
 
 		for _, m := range messages {
 			resErr := &ResponseError{
-				Response: errRes.ResponseError.Response,
+				Response: er.ResponseError.Response,
 				Message: m,
 			}
 
@@ -429,12 +489,12 @@ func CheckResponse(res *http.Response) error {
 				err = (*FileError)(resErr)
 
 			case strings.Contains(m, "you have downloaded your allowed"):
-				q := &Quota{}
-				qErr := json.Unmarshal(data, q)
+				var q Quota
+				qErr := json.Unmarshal(data, &q)
 				if qErr == nil && q.Remaining < 0 {
 					err = &QuotaError{
 						ResponseError: *resErr,
-						Quota: *q,
+						Quota: q,
 					}
 				}
 
@@ -448,60 +508,51 @@ func CheckResponse(res *http.Response) error {
 				err = (*ResponseError)(resErr)
 			}
 
-			errRes.Errors = append(errRes.Errors, err)
+			er.Errors = append(er.Errors, err)
 		}
 	}
+	res.Body = io.NopCloser(bytes.NewBuffer(data))
 
-	v = errRes.Response.Request.Header.Get(apiKeyHeader)
+	v = er.Response.Request.Header.Get(apiKeyHeader)
 	if v == "" {
 		err := &APIKeyError{
-			Response: errRes.ResponseError.Response,
+			Response: er.ResponseError.Response,
 			Message: "rest: api-key header is empty",
 		}
 		messages = append(messages, err.Message)
-		errRes.Errors = append(errRes.Errors, err)
+		er.Errors = append(er.Errors, err)
 	}
 
-	v = errRes.Response.Request.Header.Get("User-Agent")
+	v = er.Response.Request.Header.Get("User-Agent")
 	if v == "" {
 		err := &UserAgentError{
-			Response: errRes.ResponseError.Response,
+			Response: er.ResponseError.Response,
 			Message: "rest: user-agent header is empty",
 		}
 		messages = append(messages, err.Message)
-		errRes.Errors = append(errRes.Errors, err)
-	} else {
-		re, err := regexp.Compile(`\S+ v\d+\.\d+\.\d+`)
-		if err == nil && !re.MatchString(v) {
-			err := &UserAgentError{
-				Response: errRes.ResponseError.Response,
-				Message: "rest: user-agent is wrong",
-			}
-			messages = append(messages, err.Message)
-			errRes.Errors = append(errRes.Errors, err)
-		}
+		er.Errors = append(er.Errors, err)
 	}
 
-	v = errRes.Response.Request.Header.Get("Authorization")
+	v = er.Response.Request.Header.Get("Authorization")
 	if v == "" {
 		err := &AuthTokenError{
-			Response: errRes.ResponseError.Response,
+			Response: er.ResponseError.Response,
 			Message: "rest: authorization header is empty",
 		}
 		messages = append(messages, err.Message)
-		errRes.Errors = append(errRes.Errors, err)
+		er.Errors = append(er.Errors, err)
 	} else if !(strings.HasPrefix(v, "Bearer ") && len(v) > len("Bearer ")) {
 		err := &AuthTokenError{
-			Response: errRes.ResponseError.Response,
+			Response: er.ResponseError.Response,
 			Message: "rest: authorization token is empty",
 		}
 		messages = append(messages, err.Message)
-		errRes.Errors = append(errRes.Errors, err)
+		er.Errors = append(er.Errors, err)
 	}
 
-	errRes.Message = strings.Join(messages, "; ")
+	er.Message = strings.Join(messages, "; ")
 
-	return errRes
+	return er
 }
 
 // The OpenSubtitles API is inconsistent as it may represent IDs in either
@@ -519,7 +570,7 @@ func (id *ID) EncodeValues(key string, v *url.Values) error {
 
 func (id *ID) UnmarshalJSON(data []byte) error {
 	type a ID
-	b := struct { *a }{ (*a)(id) }
+	b := struct {*a}{(*a)(id)}
 
 	err := json.Unmarshal(data, b.a)
 	if err == nil {
@@ -569,4 +620,11 @@ func AllocateString(v string) *string {
 func AllocateTime(v string) *time.Time {
 	t, _ := time.Parse(time.RFC3339, v)
 	return &t
+}
+
+// Creates a RoundTripper (transport).
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return fn(r)
 }
