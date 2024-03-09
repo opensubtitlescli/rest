@@ -22,9 +22,6 @@ type Login struct {
 	BaseURL       *string `json:"base_url,omitempty"`
 	Token         *string `json:"token,omitempty"`
 	User          *User   `json:"user,omitempty"`
-
-	// Ignored because it can be accessed from the response object.
-	// Status *int `json:"status,omitempty"`
 }
 
 func (l *Login) UnmarshalJSON(data []byte) error {

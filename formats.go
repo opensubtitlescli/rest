@@ -8,9 +8,6 @@ type FormatsService service
 
 type formatsResponse struct {
 	Data *FormatsResponse `json:"data,omitempty"`
-
-	// Ignored because it can be accessed from the response object.
-	// Status *int `json:"status,omitempty"`
 }
 
 type FormatsResponse struct {

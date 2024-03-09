@@ -8,9 +8,6 @@ type UsersService service
 
 type userResponse struct {
 	Data *User `json:"data,omitempty"`
-
-	// Ignored because it can be accessed from the response object.
-	// Status *int `json:"status,omitempty"`
 }
 
 type User struct {

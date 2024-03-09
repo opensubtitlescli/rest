@@ -8,9 +8,6 @@ type LanguagesService service
 
 type languagesResponse struct {
 	Data []*Language `json:"data,omitempty"`
-
-	// Ignored because it can be accessed from the response object.
-	// Status *int `json:"status,omitempty"`
 }
 
 type Language struct {

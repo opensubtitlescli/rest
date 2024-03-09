@@ -397,9 +397,6 @@ type internalError struct {
 	Message *string   `json:"message,omitempty"`
 	Error   *string   `json:"error,omitempty"`
 	Errors  []*string `json:"errors,omitempty"`
-
-	// Ignored because it can be accessed from the response object.
-	// Status *int `json:"status,omitempty"`
 }
 
 func CheckResponse(res *http.Response) error {
