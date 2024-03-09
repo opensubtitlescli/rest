@@ -35,8 +35,7 @@ func TestLanguagesServiceList_ListsLanguages(t *testing.T) {
 		fmt.Fprint(w, `{
 			"data": [
 				{
-					"language_code": "en",
-					"language_name": "English"
+					"language_code": "en"
 				}
 			],
 			"status": 200
@@ -47,7 +46,6 @@ func TestLanguagesServiceList_ListsLanguages(t *testing.T) {
 	e := []*Language{
 		{
 			LanguageCode: AllocateString("en"),
-			LanguageName: AllocateString("English"),
 		},
 	}
 	a, _, err := client.Languages.List(ctx)

@@ -8,13 +8,13 @@ import (
 type SubtitlesService service
 
 type SubtitlesDownloadParameters struct {
-	FileID        *ID     `json:"file_id,omitempty"`
-	FileName      *string `json:"file_name,omitempty"`
-	ForceDownload *bool   `json:"force_download,omitempty"`
-	InFPS         *int    `json:"in_fps,omitempty"`
-	OutFPS        *int    `json:"out_fps,omitempty"`
-	SubFormat     *string `json:"sub_format,omitempty"`
-	Timeshift     *int    `json:"timeshift,omitempty"`
+	FileID        ID     `json:"file_id,omitempty"`
+	FileName      string `json:"file_name,omitempty"`
+	ForceDownload bool   `json:"force_download,omitempty"`
+	InFPS         int    `json:"in_fps,omitempty"`
+	OutFPS        int    `json:"out_fps,omitempty"`
+	SubFormat     string `json:"sub_format,omitempty"`
+	Timeshift     int    `json:"timeshift,omitempty"`
 }
 
 type SubtitlesDownloadResponse struct {
@@ -53,29 +53,29 @@ func (s *SubtitlesService) Download(ctx context.Context, p *SubtitlesDownloadPar
 }
 
 type SubtitlesSearchParameters struct {
-	AITranslated      *string `url:"ai_translated,omitempty"`
-	EpisodeNumber     *int    `url:"episode_number,omitempty"`
-	ForeignPartsOnly  *string `url:"foreign_parts_only,omitempty"`
-	HearingImpaired   *string `url:"hearing_impaired,omitempty"`
-	ID                *ID     `url:"id,omitempty"`
-	IMDBID            *ID     `url:"imdb_id,omitempty"`
-	Languages         *string `url:"languages,omitempty"`
-	MachineTranslated *string `url:"machine_translated,omitempty"`
-	Moviehash         *string `url:"moviehash,omitempty"`
-	MoviehashMatch    *string `url:"moviehash_match,omitempty"`
-	OrderBy           *string `url:"order_by,omitempty"`
-	OrderDirection    *string `url:"order_direction,omitempty"`
-	Page              *int    `url:"page,omitempty"`
-	ParentFeatureID   *ID     `url:"parent_feature_id,omitempty"`
-	ParentIMDBID      *ID     `url:"parent_imdb_id,omitempty"`
-	ParentTMDBID      *ID     `url:"parent_tmdb_id,omitempty"`
-	Query             *string `url:"query,omitempty"`
-	SeasonNumber      *int    `url:"season_number,omitempty"`
-	TMDBID            *ID     `url:"tmdb_id,omitempty"`
-	TrustedSources    *string `url:"trusted_sources,omitempty"`
-	Type              *string `url:"type,omitempty"`
-	UserID            *ID     `url:"user_id,omitempty"`
-	Year              *int    `url:"year,omitempty"`
+	AITranslated      string `url:"ai_translated,omitempty"`
+	EpisodeNumber     int    `url:"episode_number,omitempty"`
+	ForeignPartsOnly  string `url:"foreign_parts_only,omitempty"`
+	HearingImpaired   string `url:"hearing_impaired,omitempty"`
+	ID                ID     `url:"id,omitempty"`
+	IMDBID            ID     `url:"imdb_id,omitempty"`
+	Languages         string `url:"languages,omitempty"`
+	MachineTranslated string `url:"machine_translated,omitempty"`
+	Moviehash         string `url:"moviehash,omitempty"`
+	MoviehashMatch    string `url:"moviehash_match,omitempty"`
+	OrderBy           string `url:"order_by,omitempty"`
+	OrderDirection    string `url:"order_direction,omitempty"`
+	Page              int    `url:"page,omitempty"`
+	ParentFeatureID   ID     `url:"parent_feature_id,omitempty"`
+	ParentIMDBID      ID     `url:"parent_imdb_id,omitempty"`
+	ParentTMDBID      ID     `url:"parent_tmdb_id,omitempty"`
+	Query             string `url:"query,omitempty"`
+	SeasonNumber      int    `url:"season_number,omitempty"`
+	TMDBID            ID     `url:"tmdb_id,omitempty"`
+	TrustedSources    string `url:"trusted_sources,omitempty"`
+	Type              string `url:"type,omitempty"`
+	UserID            ID     `url:"user_id,omitempty"`
+	Year              int    `url:"year,omitempty"`
 }
 
 type subtitlesSearchResponse struct {

@@ -7,12 +7,12 @@ import (
 type FeaturesService service
 
 type FeaturesSearchParameters struct {
-	FeatureID *ID     `url:"feature_id,omitempty"`
-	IMDBID    *ID     `url:"imdb_id,omitempty"`
-	Query     *string `url:"query,omitempty"`
-	TMDBID    *ID     `url:"tmdb_id,omitempty"`
-	Type      *string `url:"type,omitempty"`
-	Year      *int    `url:"year,omitempty"`
+	FeatureID ID     `url:"feature_id,omitempty"`
+	IMDBID    ID     `url:"imdb_id,omitempty"`
+	Query     string `url:"query,omitempty"`
+	TMDBID    ID     `url:"tmdb_id,omitempty"`
+	Type      string `url:"type,omitempty"`
+	Year      int    `url:"year,omitempty"`
 }
 
 type featuresSearchResponse struct {

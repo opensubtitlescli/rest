@@ -1190,7 +1190,18 @@ func equalMarshal(t *testing.T, a interface {}, b string) {
 	var aj bytes.Buffer
 	err = json.Indent(&aj, []byte(b), "", "  ")
 	require.NoError(t, err)
-	assert.Equal(t, string(ej), aj.String())
+	assert.JSONEq(t, string(ej), aj.String())
+}
+
+func equalBody(t *testing.T, b io.ReadCloser, e string) {
+	d, err := io.ReadAll(b)
+	require.NoError(t, err)
+
+	err = b.Close()
+	require.NoError(t, err)
+
+	a := string(d)
+	assert.JSONEq(t, e, a)
 }
 
 func toBody(s string) io.ReadCloser {

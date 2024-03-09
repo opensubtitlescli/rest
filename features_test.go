@@ -16,12 +16,12 @@ func TestFeaturesSearchParameters_EncodesValues(t *testing.T) {
 	equalQuery(t, a, b)
 
 	a = &FeaturesSearchParameters{
-		FeatureID: AllocateID(1),
-		IMDBID: AllocateID(1),
-		Query: AllocateString("hi"),
-		TMDBID: AllocateID(1),
-		Type: AllocateString("all"),
-		Year: AllocateInt(2009),
+		FeatureID: 1,
+		IMDBID: 1,
+		Query: "hi",
+		TMDBID: 1,
+		Type: "all",
+		Year: 2009,
 	}
 	b = "feature_id=1&imdb_id=1&query=hi&tmdb_id=1&type=all&year=2009"
 	equalQuery(t, a, b)
@@ -83,7 +83,7 @@ func TestFeaturesServiceSearch_SearchesFeatures(t *testing.T) {
 
 	mux.HandleFunc("/features", func (w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "GET", r.Method)
-		assert.Equal(t, "/features?&feature_id=0", r.RequestURI)
+		assert.Equal(t, "/features?&feature_id=1", r.RequestURI)
 		fmt.Fprint(w, `{
 			"data": [
 				{
@@ -100,7 +100,7 @@ func TestFeaturesServiceSearch_SearchesFeatures(t *testing.T) {
 		},
 	}
 	p := &FeaturesSearchParameters{
-		FeatureID: AllocateID(0),
+		FeatureID: 1,
 	}
 	a, _, err := client.Features.Search(ctx, p)
 	require.NoError(t, err)

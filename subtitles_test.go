@@ -16,18 +16,18 @@ func TestSubtitlesDownloadParameters_UnmarshalsAndMarshals(t *testing.T) {
 	equalJSON(t, a, b)
 
 	a = &SubtitlesDownloadParameters{
-		FileID: AllocateID(1),
-		FileName: AllocateString("custom"),
-		ForceDownload: AllocateBool(false),
-		InFPS: AllocateInt(1),
-		OutFPS: AllocateInt(1),
-		SubFormat: AllocateString("srt"),
-		Timeshift: AllocateInt(1),
+		FileID: 1,
+		FileName: "custom",
+		ForceDownload: true,
+		InFPS: 1,
+		OutFPS: 1,
+		SubFormat: "srt",
+		Timeshift: 1,
 	}
 	b = `{
 		"file_id": 1,
 		"file_name": "custom",
-		"force_download": false,
+		"force_download": true,
 		"in_fps": 1,
 		"out_fps": 1,
 		"sub_format": "srt",
@@ -59,6 +59,9 @@ func TestSubtitlesServiceDownload_DownloadsSubtitles(t *testing.T) {
 	mux.HandleFunc("/download", func (w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "POST", r.Method)
 		assert.Equal(t, "/download", r.RequestURI)
+		equalBody(t, r.Body, `{
+			"file_id": 1
+		}`)
 		fmt.Fprint(w, `{
 			"link": "https://www.opensubtitles.com/"
 		}`)
@@ -69,13 +72,7 @@ func TestSubtitlesServiceDownload_DownloadsSubtitles(t *testing.T) {
 		Link: AllocateString("https://www.opensubtitles.com/"),
 	}
 	p := &SubtitlesDownloadParameters{
-		FileID: AllocateID(1),
-		FileName: AllocateString("custom"),
-		ForceDownload: AllocateBool(false),
-		InFPS: AllocateInt(1),
-		OutFPS: AllocateInt(1),
-		SubFormat: AllocateString("srt"),
-		Timeshift: AllocateInt(1),
+		FileID: 1,
 	}
 	a, _, err := client.Subtitles.Download(ctx, p)
 	require.NoError(t, err)
@@ -88,53 +85,53 @@ func TestSubtitlesSearchParameters_EncodesValues(t *testing.T) {
 	equalQuery(t, a, b)
 
 	a = &SubtitlesSearchParameters{
-		AITranslated: AllocateString("include"),
-		EpisodeNumber: AllocateInt(0),
-		ForeignPartsOnly: AllocateString("include"),
-		HearingImpaired: AllocateString("include"),
-		ID: AllocateID(0),
-		IMDBID: AllocateID(0),
-		Languages: AllocateString("en,ru"),
-		MachineTranslated: AllocateString("exclude"),
-		Moviehash: AllocateString("b4d8"),
-		MoviehashMatch: AllocateString("include"),
-		OrderBy: AllocateString("download_count"),
-		OrderDirection: AllocateString("asc"),
-		Page: AllocateInt(0),
-		ParentFeatureID: AllocateID(0),
-		ParentIMDBID: AllocateID(0),
-		ParentTMDBID: AllocateID(0),
-		Query: AllocateString("friends"),
-		SeasonNumber: AllocateInt(0),
-		TMDBID: AllocateID(0),
-		TrustedSources: AllocateString("include"),
-		Type: AllocateString("all"),
-		UserID: AllocateID(0),
-		Year: AllocateInt(1994),
+		AITranslated: "include",
+		EpisodeNumber: 1,
+		ForeignPartsOnly: "include",
+		HearingImpaired: "include",
+		ID: 1,
+		IMDBID: 1,
+		Languages: "en,ru",
+		MachineTranslated: "exclude",
+		Moviehash: "b4d8",
+		MoviehashMatch: "include",
+		OrderBy: "download_count",
+		OrderDirection: "asc",
+		Page: 1,
+		ParentFeatureID: 1,
+		ParentIMDBID: 1,
+		ParentTMDBID: 1,
+		Query: "friends",
+		SeasonNumber: 1,
+		TMDBID: 1,
+		TrustedSources: "include",
+		Type: "all",
+		UserID: 1,
+		Year: 1994,
 	}
 	b =
 		"ai_translated=include&" +
-		"episode_number=0&" +
+		"episode_number=1&" +
 		"foreign_parts_only=include&" +
 		"hearing_impaired=include&" +
-		"id=0&" +
-		"imdb_id=0&" +
+		"id=1&" +
+		"imdb_id=1&" +
 		"languages=en%2Cru&" +
 		"machine_translated=exclude&" +
 		"moviehash=b4d8&" +
 		"moviehash_match=include&" +
 		"order_by=download_count&" +
 		"order_direction=asc&" +
-		"page=0&" +
-		"parent_feature_id=0&" +
-		"parent_imdb_id=0&" +
-		"parent_tmdb_id=0&" +
+		"page=1&" +
+		"parent_feature_id=1&" +
+		"parent_imdb_id=1&" +
+		"parent_tmdb_id=1&" +
 		"query=friends&" +
-		"season_number=0&" +
-		"tmdb_id=0&" +
+		"season_number=1&" +
+		"tmdb_id=1&" +
 		"trusted_sources=include&" +
 		"type=all&" +
-		"user_id=0&" +
+		"user_id=1&" +
 		"year=1994"
 	equalQuery(t, a, b)
 }
@@ -334,7 +331,7 @@ func TestSearchesSubtitles(t *testing.T) {
 		},
 	}
 	p := &SubtitlesSearchParameters{
-		AITranslated: AllocateString("include"),
+		AITranslated: "include",
 	}
 	a, _, err := client.Subtitles.Search(ctx, p)
 	require.NoError(t, err)

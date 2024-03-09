@@ -8,8 +8,8 @@ import (
 type AuthService service
 
 type Credentials struct {
-	Username *string `json:"username,omitempty"`
-	Password *string `json:"password,omitempty"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
 }
 
 type Login struct {
@@ -17,11 +17,11 @@ type Login struct {
 	// with the SetBaseURL method of the Client. It is distinct from the BaseURL
 	// because the latter includes the service host without the protocol and API
 	// version.
-	ClientBaseURL string  `json:"-"`
+	ClientBaseURL string `json:"-"`
 
-	BaseURL       *string `json:"base_url,omitempty"`
-	Token         *string `json:"token,omitempty"`
-	User          *User   `json:"user,omitempty"`
+	BaseURL *string `json:"base_url,omitempty"`
+	Token   *string `json:"token,omitempty"`
+	User    *User   `json:"user,omitempty"`
 }
 
 func (l *Login) UnmarshalJSON(data []byte) error {

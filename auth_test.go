@@ -16,8 +16,8 @@ func TestCredentials_UnmarshalsAndMarshals(t *testing.T) {
 	equalJSON(t, a, b)
 
 	a = &Credentials{
-		Username: AllocateString("username"),
-		Password: AllocateString("password"),
+		Username: "username",
+		Password: "password",
 	}
 	b = `{
 		"username": "username",
@@ -62,11 +62,6 @@ func TestLogin_UnmarshalsAndMarshals(t *testing.T) {
 	a = &Login{
 		ClientBaseURL: defaultBaseURL,
 		User: &User{
-			AllowedDownloads: AllocateInt(100),
-			AllowedTranslations: AllocateInt(5),
-			Level: AllocateString("Sub leecher"),
-			UserID: AllocateID(66),
-			ExtInstalled: AllocateBool(false),
 			VIP: AllocateBool(false),
 		},
 		BaseURL: AllocateString("api.opensubtitles.com"),
@@ -76,11 +71,6 @@ func TestLogin_UnmarshalsAndMarshals(t *testing.T) {
 		"base_url": "api.opensubtitles.com",
 		"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
 		"user": {
-			"allowed_downloads": 100,
-			"allowed_translations": 5,
-			"ext_installed": false,
-			"level": "Sub leecher",
-			"user_id": 66,
 			"vip": false
 		}
 	}`
@@ -93,6 +83,9 @@ func TestAuthServiceLogin_Logins(t *testing.T) {
 
 	mux.HandleFunc("/login", func (w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "POST", r.Method)
+		equalBody(t, r.Body, `{
+			"username": "username"
+		}`)
 		fmt.Fprint(w, `{
 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
 		}`)
@@ -104,8 +97,7 @@ func TestAuthServiceLogin_Logins(t *testing.T) {
 		Token: AllocateString("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"),
 	}
 	c := &Credentials{
-		Username: AllocateString("username"),
-		Password: AllocateString("password"),
+		Username: "username",
 	}
 	a, _, err := client.Auth.Login(ctx, c)
 	require.NoError(t, err)
