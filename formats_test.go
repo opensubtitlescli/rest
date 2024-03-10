@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFormatsResponse_UnmarshalsAndMarshals(t *testing.T) {
-	a := &FormatsResponse{}
+func TestFormatsListResponse_UnmarshalsAndMarshals(t *testing.T) {
+	a := &FormatsListResponse{}
 	b := "{}"
 	equalJSON(t, a, b)
 
-	a = &FormatsResponse{
+	a = &FormatsListResponse{
 		OutputFormats: []*string{
 			AllocateString("srt"),
 		},
@@ -41,7 +41,7 @@ func TestLFormatsServiceList_ListsFormats(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	e := &FormatsResponse{
+	e := &FormatsListResponse{
 		OutputFormats: []*string{
 			AllocateString("srt"),
 		},

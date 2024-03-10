@@ -6,16 +6,7 @@ import (
 
 type FeaturesService service
 
-type FeaturesSearchParameters struct {
-	FeatureID ID     `url:"feature_id,omitempty"`
-	IMDBID    ID     `url:"imdb_id,omitempty"`
-	Query     string `url:"query,omitempty"`
-	TMDBID    ID     `url:"tmdb_id,omitempty"`
-	Type      string `url:"type,omitempty"`
-	Year      int    `url:"year,omitempty"`
-}
-
-type featuresSearchResponse struct {
+type featuresResponse struct {
 	Data []*FeatureEntity `json:"data,omitempty"`
 }
 
@@ -58,6 +49,45 @@ type Episode struct {
 	Title         *string `json:"title,omitempty"`
 }
 
+type FeaturesPopularParameters struct {
+	Languages []string `url:"languages,omitempty" del:","`
+	Type      string   `url:"type,omitempty"`
+}
+
+// Discovers popular features, according to last 30 days downloads.
+//
+// [OpenSubtitles Reference]
+//
+// [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/6d285998026d0-popular-features
+func (s *FeaturesService) Popular(ctx context.Context, p *FeaturesPopularParameters) ([]*FeatureEntity, *Response, error) {
+	u, err := s.client.NewURL("discover/popular", &p)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var r *featuresResponse
+	res, err := s.client.Do(ctx, req, &r)
+	if err != nil {
+		return nil, res, err
+	}
+
+	return r.Data, res, nil
+}
+
+type FeaturesSearchParameters struct {
+	FeatureID ID     `url:"feature_id,omitempty"`
+	IMDBID    ID     `url:"imdb_id,omitempty"`
+	Query     string `url:"query,omitempty"`
+	TMDBID    ID     `url:"tmdb_id,omitempty"`
+	Type      string `url:"type,omitempty"`
+	Year      int    `url:"year,omitempty"`
+}
+
 // Searches for features.
 //
 // [OpenSubtitles Reference]
@@ -74,7 +104,7 @@ func (s *FeaturesService) Search(ctx context.Context, p *FeaturesSearchParameter
 		return nil, nil, err
 	}
 
-	var r *featuresSearchResponse
+	var r *featuresResponse
 	res, err := s.client.Do(ctx, req, &r)
 	if err != nil {
 		return nil, res, err

@@ -10,23 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFeaturesSearchParameters_EncodesValues(t *testing.T) {
-	a := &FeaturesSearchParameters{}
-	b := ""
-	equalQuery(t, a, b)
-
-	a = &FeaturesSearchParameters{
-		FeatureID: 1,
-		IMDBID: 1,
-		Query: "hi",
-		TMDBID: 1,
-		Type: "all",
-		Year: 2009,
-	}
-	b = "feature_id=1&imdb_id=1&query=hi&tmdb_id=1&type=all&year=2009"
-	equalQuery(t, a, b)
-}
-
 func TestFeature_UnmarshalsAndMarshals(t *testing.T) {
 	a := &Feature{}
 	b := "{}"
@@ -75,6 +58,68 @@ func TestFeatureEntity_UnmarshalsAndMarshals(t *testing.T) {
 		"id": 1
 	}`
 	equalJSON(t, a, b)
+}
+
+func TestFeaturesPopularParameters_EncodesValues(t *testing.T) {
+	a := &FeaturesPopularParameters{}
+	b := ""
+	equalQuery(t, a, b)
+
+	a = &FeaturesPopularParameters{
+		Languages: []string{"en", "ru"},
+		Type: "all",
+	}
+	b =
+		"languages=en%2Cru&" +
+		"type=all"
+	equalQuery(t, a, b)
+}
+
+func TestFeaturesServicePopular_DiscoversPopularFeatures(t *testing.T) {
+	client, mux, teardown := setup()
+	defer teardown()
+
+	mux.HandleFunc("/discover/popular", func (w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "GET", r.Method)
+		assert.Equal(t, "/discover/popular?&type=all", r.RequestURI)
+		fmt.Fprint(w, `{
+			"data": [
+				{
+					"id": "126826"
+				}
+			]
+		}`)
+	})
+
+	ctx := context.Background()
+	e := []*FeatureEntity{
+		{
+			ID: AllocateID(126826),
+		},
+	}
+	p := &FeaturesPopularParameters{
+		Type: "all",
+	}
+	a, _, err := client.Features.Popular(ctx, p)
+	require.NoError(t, err)
+	assert.Equal(t, e, a)
+}
+
+func TestFeaturesSearchParameters_EncodesValues(t *testing.T) {
+	a := &FeaturesSearchParameters{}
+	b := ""
+	equalQuery(t, a, b)
+
+	a = &FeaturesSearchParameters{
+		FeatureID: 1,
+		IMDBID: 1,
+		Query: "hi",
+		TMDBID: 1,
+		Type: "all",
+		Year: 2009,
+	}
+	b = "feature_id=1&imdb_id=1&query=hi&tmdb_id=1&type=all&year=2009"
+	equalQuery(t, a, b)
 }
 
 func TestFeaturesServiceSearch_SearchesFeatures(t *testing.T) {

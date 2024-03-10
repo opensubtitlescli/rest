@@ -10,132 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSubtitlesDownloadParameters_UnmarshalsAndMarshals(t *testing.T) {
-	a := &SubtitlesDownloadParameters{}
-	b := "{}"
-	equalJSON(t, a, b)
-
-	a = &SubtitlesDownloadParameters{
-		FileID: 1,
-		FileName: "custom",
-		ForceDownload: true,
-		InFPS: 1,
-		OutFPS: 1,
-		SubFormat: "srt",
-		Timeshift: 1,
-	}
-	b = `{
-		"file_id": 1,
-		"file_name": "custom",
-		"force_download": true,
-		"in_fps": 1,
-		"out_fps": 1,
-		"sub_format": "srt",
-		"timeshift": 1
-	}`
-	equalJSON(t, a, b)
-}
-
-func TestSubtitlesDownloadResponse_UnmarshalsAndMarshals(t *testing.T) {
-	a := &SubtitlesDownloadResponse{}
-	b := "{}"
-	equalJSON(t, a, b)
-
-	a = &SubtitlesDownloadResponse{
-		FileName: AllocateString("aliens"),
-		Link: AllocateString("https://www.opensubtitles.com/"),
-	}
-	b = `{
-		"file_name": "aliens",
-		"link": "https://www.opensubtitles.com/"
-	}`
-	equalJSON(t, a, b)
-}
-
-func TestSubtitlesServiceDownload_DownloadsSubtitles(t *testing.T) {
-	client, mux, teardown := setup()
-	defer teardown()
-
-	mux.HandleFunc("/download", func (w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "POST", r.Method)
-		assert.Equal(t, "/download", r.RequestURI)
-		equalBody(t, r.Body, `{
-			"file_id": 1
-		}`)
-		fmt.Fprint(w, `{
-			"link": "https://www.opensubtitles.com/"
-		}`)
-	})
-
-	ctx := context.Background()
-	e := &SubtitlesDownloadResponse{
-		Link: AllocateString("https://www.opensubtitles.com/"),
-	}
-	p := &SubtitlesDownloadParameters{
-		FileID: 1,
-	}
-	a, _, err := client.Subtitles.Download(ctx, p)
-	require.NoError(t, err)
-	assert.Equal(t, e, a)
-}
-
-func TestSubtitlesSearchParameters_EncodesValues(t *testing.T) {
-	a := &SubtitlesSearchParameters{}
-	b := ""
-	equalQuery(t, a, b)
-
-	a = &SubtitlesSearchParameters{
-		AITranslated: "include",
-		EpisodeNumber: 1,
-		ForeignPartsOnly: "include",
-		HearingImpaired: "include",
-		ID: 1,
-		IMDBID: 1,
-		Languages: "en,ru",
-		MachineTranslated: "exclude",
-		Moviehash: "b4d8",
-		MoviehashMatch: "include",
-		OrderBy: "download_count",
-		OrderDirection: "asc",
-		Page: 1,
-		ParentFeatureID: 1,
-		ParentIMDBID: 1,
-		ParentTMDBID: 1,
-		Query: "friends",
-		SeasonNumber: 1,
-		TMDBID: 1,
-		TrustedSources: "include",
-		Type: "all",
-		UserID: 1,
-		Year: 1994,
-	}
-	b =
-		"ai_translated=include&" +
-		"episode_number=1&" +
-		"foreign_parts_only=include&" +
-		"hearing_impaired=include&" +
-		"id=1&" +
-		"imdb_id=1&" +
-		"languages=en%2Cru&" +
-		"machine_translated=exclude&" +
-		"moviehash=b4d8&" +
-		"moviehash_match=include&" +
-		"order_by=download_count&" +
-		"order_direction=asc&" +
-		"page=1&" +
-		"parent_feature_id=1&" +
-		"parent_imdb_id=1&" +
-		"parent_tmdb_id=1&" +
-		"query=friends&" +
-		"season_number=1&" +
-		"tmdb_id=1&" +
-		"trusted_sources=include&" +
-		"type=all&" +
-		"user_id=1&" +
-		"year=1994"
-	equalQuery(t, a, b)
-}
-
 func TestUploader_UnmarshalsAndMarshals(t *testing.T) {
 	a := &Uploader{}
 	b := "{}"
@@ -308,7 +182,223 @@ func TestSubtitleEntity_UnmarshalsAndMarshals(t *testing.T) {
 	equalJSON(t, a, b)
 }
 
-func TestSearchesSubtitles(t *testing.T) {
+func TestSubtitlesDownloadParameters_UnmarshalsAndMarshals(t *testing.T) {
+	a := &SubtitlesDownloadParameters{}
+	b := "{}"
+	equalJSON(t, a, b)
+
+	a = &SubtitlesDownloadParameters{
+		FileID: 1,
+		FileName: "custom",
+		ForceDownload: true,
+		InFPS: 1,
+		OutFPS: 1,
+		SubFormat: "srt",
+		Timeshift: 1,
+	}
+	b = `{
+		"file_id": 1,
+		"file_name": "custom",
+		"force_download": true,
+		"in_fps": 1,
+		"out_fps": 1,
+		"sub_format": "srt",
+		"timeshift": 1
+	}`
+	equalJSON(t, a, b)
+}
+
+func TestSubtitlesDownloadResponse_UnmarshalsAndMarshals(t *testing.T) {
+	a := &SubtitlesDownloadResponse{}
+	b := "{}"
+	equalJSON(t, a, b)
+
+	a = &SubtitlesDownloadResponse{
+		FileName: AllocateString("aliens"),
+		Link: AllocateString("https://www.opensubtitles.com/"),
+	}
+	b = `{
+		"file_name": "aliens",
+		"link": "https://www.opensubtitles.com/"
+	}`
+	equalJSON(t, a, b)
+}
+
+func TestSubtitlesServiceDownload_DownloadsSubtitles(t *testing.T) {
+	client, mux, teardown := setup()
+	defer teardown()
+
+	mux.HandleFunc("/download", func (w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "POST", r.Method)
+		assert.Equal(t, "/download", r.RequestURI)
+		equalBody(t, r.Body, `{
+			"file_id": 1
+		}`)
+		fmt.Fprint(w, `{
+			"link": "https://www.opensubtitles.com/"
+		}`)
+	})
+
+	ctx := context.Background()
+	e := &SubtitlesDownloadResponse{
+		Link: AllocateString("https://www.opensubtitles.com/"),
+	}
+	p := &SubtitlesDownloadParameters{
+		FileID: 1,
+	}
+	a, _, err := client.Subtitles.Download(ctx, p)
+	require.NoError(t, err)
+	assert.Equal(t, e, a)
+}
+
+func TestSubtitlesLatestParameters_EncodesValues(t *testing.T) {
+	a := &SubtitlesLatestParameters{}
+	b := ""
+	equalQuery(t, a, b)
+
+	a = &SubtitlesLatestParameters{
+		Languages: []string{"en", "ru"},
+		Type: "all",
+	}
+	b =
+		"languages=en%2Cru&" +
+		"type=all"
+	equalQuery(t, a, b)
+}
+
+func TestSubtitlesServiceLatest_DiscoversLatestSubtitles(t *testing.T) {
+	client, mux, teardown := setup()
+	defer teardown()
+
+	mux.HandleFunc("/discover/latest", func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "GET", r.Method)
+		assert.Equal(t, "/discover/latest?&type=all", r.RequestURI)
+		fmt.Fprint(w, `{
+			"data": [
+				{
+					"id": "9000"
+				}
+			]
+		}`)
+	})
+
+	ctx := context.Background()
+	e := []*SubtitleEntity{
+		{
+			ID: AllocateID(9000),
+		},
+	}
+	p := &SubtitlesLatestParameters{
+		Type: "all",
+	}
+	a, _, err := client.Subtitles.Latest(ctx, p)
+	require.NoError(t, err)
+	assert.Equal(t, e, a)
+}
+
+func TestSubtitlesPopularParameters_EncodesValues(t *testing.T) {
+	a := &SubtitlesPopularParameters{}
+	b := ""
+	equalQuery(t, a, b)
+
+	a = &SubtitlesPopularParameters{
+		Languages: []string{"en", "ru"},
+		Type: "all",
+	}
+	b =
+		"languages=en%2Cru&" +
+		"type=all"
+	equalQuery(t, a, b)
+}
+
+func TestSubtitlesServicePopular_DiscoversPopularSubtitles(t *testing.T) {
+	client, mux, teardown := setup()
+	defer teardown()
+
+	mux.HandleFunc("/discover/most_downloaded", func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "GET", r.Method)
+		assert.Equal(t, "/discover/most_downloaded?&type=all", r.RequestURI)
+		fmt.Fprint(w, `{
+			"data": [
+				{
+					"id": "9000"
+				}
+			]
+		}`)
+	})
+
+	ctx := context.Background()
+	e := []*SubtitleEntity{
+		{
+			ID: AllocateID(9000),
+		},
+	}
+	p := &SubtitlesPopularParameters{
+		Type: "all",
+	}
+	a, _, err := client.Subtitles.Popular(ctx, p)
+	require.NoError(t, err)
+	assert.Equal(t, e, a)
+}
+
+func TestSubtitlesSearchParameters_EncodesValues(t *testing.T) {
+	a := &SubtitlesSearchParameters{}
+	b := ""
+	equalQuery(t, a, b)
+
+	a = &SubtitlesSearchParameters{
+		AITranslated: "include",
+		EpisodeNumber: 1,
+		ForeignPartsOnly: "include",
+		HearingImpaired: "include",
+		ID: 1,
+		IMDBID: 1,
+		Languages: []string{"en", "ru"},
+		MachineTranslated: "exclude",
+		Moviehash: "b4d8",
+		MoviehashMatch: "include",
+		OrderBy: "download_count",
+		OrderDirection: "asc",
+		Page: 1,
+		ParentFeatureID: 1,
+		ParentIMDBID: 1,
+		ParentTMDBID: 1,
+		Query: "friends",
+		SeasonNumber: 1,
+		TMDBID: 1,
+		TrustedSources: "include",
+		Type: "all",
+		UserID: 1,
+		Year: 1994,
+	}
+	b =
+		"ai_translated=include&" +
+		"episode_number=1&" +
+		"foreign_parts_only=include&" +
+		"hearing_impaired=include&" +
+		"id=1&" +
+		"imdb_id=1&" +
+		"languages=en%2Cru&" +
+		"machine_translated=exclude&" +
+		"moviehash=b4d8&" +
+		"moviehash_match=include&" +
+		"order_by=download_count&" +
+		"order_direction=asc&" +
+		"page=1&" +
+		"parent_feature_id=1&" +
+		"parent_imdb_id=1&" +
+		"parent_tmdb_id=1&" +
+		"query=friends&" +
+		"season_number=1&" +
+		"tmdb_id=1&" +
+		"trusted_sources=include&" +
+		"type=all&" +
+		"user_id=1&" +
+		"year=1994"
+	equalQuery(t, a, b)
+}
+
+func TestSubtitlesServiceSearch_SearchesSubtitles(t *testing.T) {
 	client, mux, teardown := setup()
 	defer teardown()
 

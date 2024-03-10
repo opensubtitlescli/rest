@@ -7,10 +7,10 @@ import (
 type FormatsService service
 
 type formatsResponse struct {
-	Data *FormatsResponse `json:"data,omitempty"`
+	Data *FormatsListResponse `json:"data,omitempty"`
 }
 
-type FormatsResponse struct {
+type FormatsListResponse struct {
 	OutputFormats []*string `json:"output_formats,omitempty"`
 }
 
@@ -19,7 +19,7 @@ type FormatsResponse struct {
 // [OpenSubtitles Reference]
 //
 // [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/69b286fc7506e-subtitle-formats
-func (s *FormatsService) List(ctx context.Context) (*FormatsResponse, *Response, error) {
+func (s *FormatsService) List(ctx context.Context) (*FormatsListResponse, *Response, error) {
 	u, err := s.client.NewURL("infos/formats", nil)
 	if err != nil {
 		return nil, nil, err
