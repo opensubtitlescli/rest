@@ -1,10 +1,10 @@
 module github.com/opensubtitlescli/rest
 
-go 1.21.5
+go 1.17
 
 require (
 	github.com/google/go-querystring v1.1.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 )
 
 require (
