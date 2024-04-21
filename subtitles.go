@@ -1,134 +1,14 @@
 package rest
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 )
 
 type SubtitlesService service
 
-type SubtitlesDownloadParameters struct {
-	FileID        *ID     `json:"file_id,omitempty"`
-	FileName      *string `json:"file_name,omitempty"`
-	ForceDownload *bool   `json:"force_download,omitempty"`
-	InFPS         *int    `json:"in_fps,omitempty"`
-	OutFPS        *int    `json:"out_fps,omitempty"`
-	SubFormat     *string `json:"sub_format,omitempty"`
-	Timeshift     *int    `json:"timeshift,omitempty"`
-}
-
-type SubtitlesDownloadResponse struct {
-	Quota    *Quota  `json:"-"`
-	FileName *string `json:"file_name,omitempty"`
-	Link     *string `json:"link,omitempty"`
-
-	// Quota replaces them without the message. Usually, you do not need to see
-	// the message unless you encounter an error.
-	// Message      *string    `json:"message,omitempty"`
-	// Remaining    *int       `json:"remaining,omitempty"`
-	// Requests     *int       `json:"requests,omitempty"`
-	// ResetTime    *string    `json:"reset_time,omitempty"`
-	// ResetTimeUTC *time.Time `json:"reset_time_utc,omitempty"`
-
-	// Found in the response body, but I do not know what they are for.
-	// TS  *int    `json:"ts,omitempty"`
-	// UID *int    `json:"uid,omitempty"`
-	// UK  *string `json:"uk,omitempty"`
-}
-
-func (r *SubtitlesDownloadResponse) UnmarshalJSON(data []byte) error {
-	type a SubtitlesDownloadResponse
-	b := struct { *a }{ (*a)(r) }
-
-	err := json.Unmarshal(data, b.a)
-	if err != nil {
-		return err
-	}
-
-	var q *Quota
-	err = json.Unmarshal(data, &q)
-	if err != nil {
-		return err
-	}
-
-	r.Quota = q
-	return nil
-}
-
-type Quota struct {
-	Remaining    int       `json:"remaining"`
-	Requests     int       `json:"requests"`
-	ResetTime    string    `json:"reset_time"`
-	ResetTimeUTC time.Time `json:"reset_time_utc"`
-}
-
-// Requests a download URL for a subtitles.
-//
-// [OpenSubtitles Reference]
-//
-// [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/6be7f6ae2d918-download
-func (s *SubtitlesService) Download(ctx context.Context, p *SubtitlesDownloadParameters) (*SubtitlesDownloadResponse, *http.Response, error) {
-	u, err := s.client.NewURL("download", nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	req, err := s.client.NewRequest("POST", u, &p)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	buf := &bytes.Buffer{}
-	res, err := s.client.Do(ctx, req, buf)
-	if err != nil {
-		return nil, res, err
-	}
-
-	var r *SubtitlesDownloadResponse
-	data := buf.Bytes()
-	err = json.Unmarshal(data, &r)
-	if err != nil {
-		return nil, res, err
-	}
-
-	return r, res, nil
-}
-
-type SubtitlesSearchParameters struct {
-	AITranslated      *string `url:"ai_translated,omitempty"`
-	EpisodeNumber     *int    `url:"episode_number,omitempty"`
-	ForeignPartsOnly  *string `url:"foreign_parts_only,omitempty"`
-	HearingImpaired   *string `url:"hearing_impaired,omitempty"`
-	ID                *ID     `url:"id,omitempty"`
-	IMDBID            *ID     `url:"imdb_id,omitempty"`
-	Languages         *string `url:"languages,omitempty"`
-	MachineTranslated *string `url:"machine_translated,omitempty"`
-	Moviehash         *string `url:"moviehash,omitempty"`
-	MoviehashMatch    *string `url:"moviehash_match,omitempty"`
-	OrderBy           *string `url:"order_by,omitempty"`
-	OrderDirection    *string `url:"order_direction,omitempty"`
-	Page              *int    `url:"page,omitempty"`
-	ParentFeatureID   *ID     `url:"parent_feature_id,omitempty"`
-	ParentIMDBID      *ID     `url:"parent_imdb_id,omitempty"`
-	ParentTMDBID      *ID     `url:"parent_tmdb_id,omitempty"`
-	Query             *string `url:"query,omitempty"`
-	SeasonNumber      *int    `url:"season_number,omitempty"`
-	TMDBID            *ID     `url:"tmdb_id,omitempty"`
-	TrustedSources    *string `url:"trusted_sources,omitempty"`
-	Type              *string `url:"type,omitempty"`
-	UserID            *ID     `url:"user_id,omitempty"`
-	Year              *int    `url:"year,omitempty"`
-}
-
-type SubtitlesSearchResponse struct {
-	Data       []*SubtitleEntity `json:"data,omitempty"`
-	Page       *int              `json:"page,omitempty"`
-	PerPage    *int              `json:"per_page,omitempty"`
-	TotalCount *int              `json:"total_count,omitempty"`
-	TotalPages *int              `json:"total_pages,omitempty"`
+type subtitlesResponse struct {
+	Data []*SubtitleEntity `json:"data,omitempty"`
 }
 
 type SubtitleEntity struct {
@@ -195,12 +75,143 @@ type Uploader struct {
 	UploaderID *ID     `json:"uploader_id,omitempty"`
 }
 
+type SubtitlesDownloadParameters struct {
+	FileID        ID     `json:"file_id,omitempty"`
+	FileName      string `json:"file_name,omitempty"`
+	ForceDownload bool   `json:"force_download,omitempty"`
+	InFPS         int    `json:"in_fps,omitempty"`
+	OutFPS        int    `json:"out_fps,omitempty"`
+	SubFormat     string `json:"sub_format,omitempty"`
+	Timeshift     int    `json:"timeshift,omitempty"`
+}
+
+type SubtitlesDownloadResponse struct {
+	FileName *string `json:"file_name,omitempty"`
+	Link     *string `json:"link,omitempty"`
+
+	// Found in the response body, but I do not know what they are for.
+	// TS  *int    `json:"ts,omitempty"`
+	// UID *int    `json:"uid,omitempty"`
+	// UK  *string `json:"uk,omitempty"`
+}
+
+// Requests a download URL for a subtitles.
+//
+// [OpenSubtitles Reference]
+//
+// [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/6be7f6ae2d918-download
+func (s *SubtitlesService) Download(ctx context.Context, p *SubtitlesDownloadParameters) (*SubtitlesDownloadResponse, *Response, error) {
+	u, err := s.client.NewURL("download", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := s.client.NewRequest("POST", u, &p)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var r *SubtitlesDownloadResponse
+	res, err := s.client.Do(ctx, req, &r)
+	if err != nil {
+		return nil, res, err
+	}
+
+	return r, res, nil
+}
+
+type SubtitlesLatestParameters struct {
+	Languages []string `url:"languages,omitempty" del:","`
+	Type      string   `url:"type,omitempty"`
+}
+
+// Discovers the last uploaded subtitles.
+//
+// [OpenSubtitles Reference]
+//
+// [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/f36cef28efaa9-latest-subtitles
+func (s *SubtitlesService) Latest(ctx context.Context, p *SubtitlesLatestParameters) ([]*SubtitleEntity, *Response, error) {
+	u, err := s.client.NewURL("discover/latest", &p)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var r *subtitlesResponse
+	res, err := s.client.Do(ctx, req, &r)
+	if err != nil {
+		return nil, res, err
+	}
+
+	return r.Data, res, nil
+}
+
+type SubtitlesPopularParameters struct {
+	Languages []string `url:"languages,omitempty" del:","`
+	Type      string   `url:"type,omitempty"`
+}
+
+// Discovers popular subtitles, according to last 30 days downloads.
+//
+// [OpenSubtitles Reference]
+//
+// [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/3a149b956fcab-most-downloaded-subtitles
+func (s *SubtitlesService) Popular(ctx context.Context, p *SubtitlesPopularParameters) ([]*SubtitleEntity, *Response, error) {
+	u, err := s.client.NewURL("discover/most_downloaded", &p)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var r *subtitlesResponse
+	res, err := s.client.Do(ctx, req, &r)
+	if err != nil {
+		return nil, res, err
+	}
+
+	return r.Data, res, nil
+}
+
+type SubtitlesSearchParameters struct {
+	AITranslated      string   `url:"ai_translated,omitempty"`
+	EpisodeNumber     int      `url:"episode_number,omitempty"`
+	ForeignPartsOnly  string   `url:"foreign_parts_only,omitempty"`
+	HearingImpaired   string   `url:"hearing_impaired,omitempty"`
+	ID                ID       `url:"id,omitempty"`
+	IMDBID            ID       `url:"imdb_id,omitempty"`
+	Languages         []string `url:"languages,omitempty" del:","`
+	MachineTranslated string   `url:"machine_translated,omitempty"`
+	Moviehash         string   `url:"moviehash,omitempty"`
+	MoviehashMatch    string   `url:"moviehash_match,omitempty"`
+	OrderBy           string   `url:"order_by,omitempty"`
+	OrderDirection    string   `url:"order_direction,omitempty"`
+	Page              int      `url:"page,omitempty"`
+	ParentFeatureID   ID       `url:"parent_feature_id,omitempty"`
+	ParentIMDBID      ID       `url:"parent_imdb_id,omitempty"`
+	ParentTMDBID      ID       `url:"parent_tmdb_id,omitempty"`
+	Query             string   `url:"query,omitempty"`
+	SeasonNumber      int      `url:"season_number,omitempty"`
+	TMDBID            ID       `url:"tmdb_id,omitempty"`
+	TrustedSources    string   `url:"trusted_sources,omitempty"`
+	Type              string   `url:"type,omitempty"`
+	UserID            ID       `url:"user_id,omitempty"`
+	Year              int      `url:"year,omitempty"`
+}
+
 // Searches for subtitles.
 //
 // [OpenSubtitles Reference]
 //
 // [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/a172317bd5ccc-search-for-subtitles
-func (s *SubtitlesService) Search(ctx context.Context, p *SubtitlesSearchParameters) (*SubtitlesSearchResponse, *http.Response, error) {
+func (s *SubtitlesService) Search(ctx context.Context, p *SubtitlesSearchParameters) ([]*SubtitleEntity, *Response, error) {
 	u, err := s.client.NewURL("subtitles", &p)
 	if err != nil {
 		return nil, nil, err
@@ -211,11 +222,11 @@ func (s *SubtitlesService) Search(ctx context.Context, p *SubtitlesSearchParamet
 		return nil, nil, err
 	}
 
-	var r *SubtitlesSearchResponse
+	var r *subtitlesResponse
 	res, err := s.client.Do(ctx, req, &r)
 	if err != nil {
 		return nil, res, err
 	}
 
-	return r, res, nil
+	return r.Data, res, nil
 }

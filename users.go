@@ -2,16 +2,12 @@ package rest
 
 import (
 	"context"
-	"net/http"
 )
 
 type UsersService service
 
-type UserResponse struct {
+type userResponse struct {
 	Data *User `json:"data,omitempty"`
-
-	// Ignored because it can be accessed from the response object.
-	// Status *int `json:"status,omitempty"`
 }
 
 type User struct {
@@ -31,7 +27,7 @@ type User struct {
 // [OpenSubtitles Reference]
 //
 // [OpenSubtitles Reference]: https://opensubtitles.stoplight.io/docs/opensubtitles-api/ea912bb244ef0-user-informations
-func (s *UsersService) Get(ctx context.Context) (*UserResponse, *http.Response, error) {
+func (s *UsersService) Get(ctx context.Context) (*User, *Response, error) {
 	u, err := s.client.NewURL("infos/user", nil)
 	if err != nil {
 		return nil, nil, err
@@ -42,11 +38,11 @@ func (s *UsersService) Get(ctx context.Context) (*UserResponse, *http.Response, 
 		return nil, nil, err
 	}
 
-	var r *UserResponse
+	var r *userResponse
 	res, err := s.client.Do(ctx, req, &r)
 	if err != nil {
 		return nil, res, err
 	}
 
-	return r, res, nil
+	return r.Data, res, nil
 }
