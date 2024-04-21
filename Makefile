@@ -14,5 +14,7 @@ lint: # Lint the source code.
 	@golangci-lint run
 
 .PHONY: test
+test: \
+	export MISE_ENV=production
 test: # Run tests.
-	@go test -v ./...
+	@mise exec -- go test -v ./...
