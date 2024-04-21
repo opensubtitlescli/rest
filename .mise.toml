@@ -1,0 +1,11 @@
+[tools]
+go            = "prefix:1.22"
+golangci-lint = "prefix:1.57"
+
+# The tools listed below are used in the project.
+# However, they are installed globally.
+# awk       = "prefix:5.3"    # GNU
+# coreutils = "prefix:9.5"    # GNU
+# grep      = "prefix:3.11"   # GNU
+# make      = "prefix:4.4"    # GNU
+# mise      = "prefix:2024.4"
